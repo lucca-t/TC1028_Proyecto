@@ -1,8 +1,3 @@
-import tkinter as tk
-from tkinter import font
-
-
-
 # Evidencia 2
 # Proyecto Integrador TC1028 Pensamiento Computacional para Ingeniería
 # Grupo 417
@@ -12,17 +7,23 @@ from tkinter import font
 # para jugar el laberinto en una interfaz gráfica.
 
 
-CELL_SIZE = 50  # Tamaño de cada celda en píxeles
+
+import tkinter as tk
+from tkinter import font
+
+
+CELL_SIZE = 60  # Tamaño de cada celda en píxeles
 
 
 def cargar_laberinto(archivo):
     """
     Entrada: Archivo de texto.
     Proceso: Procesar el texto para convertir en matriz.
-    Salida: Lista de listas de laberinto.
+    Salida: Lista de listas de laberinto o vacio si esta incorrecto el archivo.
     """
+    lineas = []
     try:
-        with open(archivo, "r", encoding="utf-8") as f:
+        with open(archivo, "r") as f:
             lineas = [list(line.strip("\n")) for line in f.readlines()]
         return lineas
     except FileNotFoundError:
@@ -32,9 +33,6 @@ def cargar_laberinto(archivo):
 
 def configurar_laberinto(usar_archivo=False, nombre_archivo=""):
     """
-    Configura el laberinto, ya sea cargando desde un archivo
-    o usando el laberinto predefinido. Los valores predeterminados son en caso
-    de usar un laberinto pre determinado.
     Entrada: Archivo o nada
     Proceso: Configurar los valores para iniciar el laberinto
     Salida: Valores de laberinto
@@ -78,9 +76,7 @@ def dibujar_laberinto(canvas, laberinto):
              Cambiar color dependiendo de tipo de bloque con outline
     Salida: Canvas de Tkinter actualizado
     """
-    canvas.delete("all")
-    
-   
+
     for fila in range(len(laberinto)):
         for col in range(len(laberinto[0])):
             x1 = col * CELL_SIZE
@@ -125,16 +121,25 @@ def calcular_nueva_posicion(pos, mov):
 
 
 def es_valido(laberinto, pos):
-    """Verifica si la posición indicada no corresponde a una pared o fuera del rango."""
+    """
+    Entrada: Matriz de laberinto, posicion de jugador
+    Proceso: Verificar si la posicion nueva es valida
+    Salida: True or False
+    """
     fila, col = pos
     if 0 <= fila < len(laberinto) and 0 <= col < len(laberinto[0]):
         return laberinto[fila][col] != '#'
-    return False
+    else:
+        return False
 
 
 def mover(event, laberinto, canvas, ventana, posicion_jugador,
           posicion_salida, movimientos):
     """
+    Entrada: Event de teclado, matriz del laberinto, canvas y ventana de 
+    tkinter, posicion del jugador, posicion del final, cantidad de movimientos
+    Proceso: Actualizar nuevo movimiento visualmente
+    Salida: Posicion y movimientos actualizados 
     Gestiona el movimiento del jugador y verifica si ha llegado a la meta.
     Devuelve la nueva posición y el número actualizado de movimientos.
     """
@@ -158,6 +163,8 @@ def mover(event, laberinto, canvas, ventana, posicion_jugador,
         if posicion_jugador == posicion_salida:
             laberinto[posicion_jugador[0]][posicion_jugador[1]] = 'P'
             dibujar_laberinto(canvas, laberinto)
+
+            # Poner el texto en medio de la pantalla
             canvas.create_text(
                 len(laberinto[0]) * CELL_SIZE // 2,
                 len(laberinto) * CELL_SIZE // 2,
@@ -204,6 +211,8 @@ def main():
 
     dibujar_laberinto(canvas, laberinto)
 
+    # Mini metodo que llama mover si se presiona cualquier tecla
+    # nonlocal para que use los valores edl main
     def on_key(event):
         nonlocal posicion_jugador, movimientos
         posicion_jugador, movimientos = mover(
@@ -211,7 +220,9 @@ def main():
             posicion_jugador, posicion_salida, movimientos
         )
     
+    # Checar por cualquier tecla y filtrar despues
     ventana.bind("<Key>", on_key)
+    
     ventana.mainloop()
 
 
