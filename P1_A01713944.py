@@ -1,114 +1,219 @@
+import tkinter as tk
+from tkinter import font
 
-# TC1028. Pensamiento Computacional para Ingeniería
+
+
+# Evidencia 2
+# Proyecto Integrador TC1028 Pensamiento Computacional para Ingeniería
+# Grupo 417
+# Autor: Lucca Traslosheros Abascal
 #
-# Lucca Traslosheros Abascal
-# 25 de septiembre de 2025
-# Prototipo del Proyecto
+# Este proyecto usa un laberinto precargado o un archivo de texto
+# para jugar el laberinto en una interfaz gráfica.
 
 
-def mostrar_tablero(tablero, movimientos):
-    # Muestra el tablero y el contador de movimientos
-    print("\n====================")
+CELL_SIZE = 50  # Tamaño de cada celda en píxeles
 
-    for fila in tablero:
-        print(" ".join(fila))
-        
-    print(f"Movimientos: {movimientos}")
-    print("====================")
 
-def calcular_nueva_posicion(posicion, movimiento):
-    # Calcula la nueva coordenada
-    # Guarda posicion en una lista de 2 indices
-    # [fila, columna]
-    # Tambien puede ser un tuple 
+def cargar_laberinto(archivo):
+    """
+    Entrada: Archivo de texto.
+    Proceso: Procesar el texto para convertir en matriz.
+    Salida: Lista de listas de laberinto.
+    """
+    try:
+        with open(archivo, "r", encoding="utf-8") as f:
+            lineas = [list(line.strip("\n")) for line in f.readlines()]
+        return lineas
+    except FileNotFoundError:
+        print(f"Error: no se encontró el archivo '{archivo}'")
+        return []
 
-    nueva_pos = list(posicion)
-    if movimiento == 'w':
-        nueva_pos[0] -= 1
-    elif movimiento == 's':
-        nueva_pos[0] += 1
-    elif movimiento == 'a':
-        nueva_pos[1] -= 1
-    elif movimiento == 'd':
-        nueva_pos[1] += 1
-    return nueva_pos
 
-def es_movimiento_valido(tablero, posicion):
-    # Verifica si el movimiento esta dentro de los limites 
-    # y que no es una pared
+def configurar_laberinto(usar_archivo=False, nombre_archivo=""):
+    """
+    Configura el laberinto, ya sea cargando desde un archivo
+    o usando el laberinto predefinido. Los valores predeterminados son en caso
+    de usar un laberinto pre determinado.
+    Entrada: Archivo o nada
+    Proceso: Configurar los valores para iniciar el laberinto
+    Salida: Valores de laberinto
+    """
+    if usar_archivo:
+        laberinto = cargar_laberinto(nombre_archivo)
+        if not laberinto:
+            print("Usando el laberinto predefinido por error de archivo.")
+    else:
+        laberinto = []
 
-    fila, col = posicion
-    # si no esta out of bounds
-    if 0 <= fila < len(tablero) and 0 <= col < len(tablero[0]):
-        if tablero[fila][col] != '#':
-            # y si no es pared
-            return True
-    # si no falso
+    # laberinto por defecto
+    if not laberinto:
+        laberinto = [
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+            ['#', 'P', '.', '#', '.', '.', '.', '.', '#'],
+            ['#', '.', '.', '#', '.', '#', '#', '.', '#'],
+            ['#', '.', '#', '#', '.', '.', '#', '.', '#'],
+            ['#', '.', '.', '.', '.', '#', '#', '.', 'E'],
+            ['#', '#', '#', '#', '#', '#', '#', '#', '#']
+        ]
+
+    posicion_jugador = []
+    posicion_salida = []
+
+    # Configurar posicion de inicio salida
+    for i, fila in enumerate(laberinto):
+        for j, celda in enumerate(fila):
+            if celda == 'P':
+                posicion_jugador = [i, j]
+            elif celda in ('E', 'X'):
+                posicion_salida = [i, j]
+
+    return laberinto, posicion_jugador, posicion_salida
+
+
+def dibujar_laberinto(canvas, laberinto):
+    """
+    Entrada: Canvas de Tkinter y estatus actual de laberinto
+    Proceso: Dibujar todas las posiciones en texto para usar visualizar en Tkinter
+             Cambiar color dependiendo de tipo de bloque con outline
+    Salida: Canvas de Tkinter actualizado
+    """
+    canvas.delete("all")
+    
+   
+    for fila in range(len(laberinto)):
+        for col in range(len(laberinto[0])):
+            x1 = col * CELL_SIZE
+            y1 = fila * CELL_SIZE
+            x2 = x1 + CELL_SIZE
+            y2 = y1 + CELL_SIZE
+
+            celda = laberinto[fila][col]
+
+            if celda == '#':
+                color = "black"
+            elif celda == 'P':
+                color = "blue"
+            elif celda in ('E', 'X'):
+                color = "green"
+            else:
+                color = "white"
+
+            canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="gray")
+
+
+def calcular_nueva_posicion(pos, mov):
+    """
+    Entrada: posicion actual del jugador y la tecla ingresada
+    Proceso: Cambiar la fila o columna dependiendo del movimiento
+    Salida: Devuelve la nueva posición según la tecla (w/a/s/d).
+    """
+
+    fila, col = pos
+
+    if mov == 'w':
+        fila -= 1
+    elif mov == 's':
+        fila += 1
+    elif mov == 'a':
+        col -= 1
+    elif mov == 'd':
+        col += 1
+
+    return [fila, col]
+
+
+
+def es_valido(laberinto, pos):
+    """Verifica si la posición indicada no corresponde a una pared o fuera del rango."""
+    fila, col = pos
+    if 0 <= fila < len(laberinto) and 0 <= col < len(laberinto[0]):
+        return laberinto[fila][col] != '#'
     return False
 
-def jugar():
-    # Logica del juego general
 
-    # Laberinto y posicion de todo esta hard coded
-    # El laberinto se representa como una matriz que es una lista de listas.
-    laberinto = [
-        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
-        ['#', 'P', '.', '#', '.', '.', '.', '.', '#'],
-        ['#', '.', '.', '#', '.', '#', '#', '.', '#'],
-        ['#', '.', '#', '#', '.', '.', '#', '.', '#'],
-        ['#', '.', '.', '.', '.', '#', '#', '.', 'E'],
-        ['#', '#', '#', '#', '#', '#', '#', '#', '#']
-    ]
+def mover(event, laberinto, canvas, ventana, posicion_jugador,
+          posicion_salida, movimientos):
+    """
+    Gestiona el movimiento del jugador y verifica si ha llegado a la meta.
+    Devuelve la nueva posición y el número actualizado de movimientos.
+    """
 
-    # Coordenadas iniciales [fila, columna]
-    # variables iniciales
-    posicion_jugador = [1, 1]
-    posicion_salida = [4, 8]
-    movimientos = 0
-    juego_activo = True
+    # Solo considerar (w/a/s/d) para movimientos
+    tecla = event.keysym.lower()
+    if tecla not in ['w', 'a', 's', 'd']:
+        return posicion_jugador, movimientos
 
-    print("--- Inicio del Juego del Laberinto ---")
-    print("Usa 'w','a','s','d' para moverte. Escribe 'salir' para terminar.")
+    # Actualizar posicion nueva
+    nueva = calcular_nueva_posicion(posicion_jugador, tecla)
 
-    while juego_activo:
-        mostrar_tablero(laberinto, movimientos)
+    # Actualizar posicion
+    if es_valido(laberinto, nueva):
+        # Cambiar posicion previa a vacio
+        laberinto[posicion_jugador[0]][posicion_jugador[1]] = '.'
+        posicion_jugador = nueva
+        movimientos += 1
 
-        # Condición de victoria.
-        # Falta hacer
-
-        # Para no ser infinito acaba despues de 20 movimientos
-        if movimientos > 20:
-            juego_activo = False
-
-
-        # Entrada: Pide el movimiento al usuario.
-        movimiento = input("Tu movimiento: ")
-
-        # Falta checar si es input valido
-
-        
-        # asigna la nueva posicion de acuerdo al movimiento del jugador
-        nueva_posicion = calcular_nueva_posicion(posicion_jugador, movimiento)
-        
-        # si el movimiento es valido entonces
-        if es_movimiento_valido(laberinto, nueva_posicion):
-            # borra la posición anterior del jugador.
-            laberinto[posicion_jugador[0]][posicion_jugador[1]] = '.'
-
-            # Actualiza la nueva posición.
-            posicion_jugador = nueva_posicion
+        # Cambiar si es ganador 
+        if posicion_jugador == posicion_salida:
             laberinto[posicion_jugador[0]][posicion_jugador[1]] = 'P'
-            movimientos += 1
-        # Si no entonces no se mueve nada
-        else:
-            print("Movimiento inválido. Intenta de nuevo.")
+            dibujar_laberinto(canvas, laberinto)
+            canvas.create_text(
+                len(laberinto[0]) * CELL_SIZE // 2,
+                len(laberinto) * CELL_SIZE // 2,
+                text=f"¡Ganaste en {movimientos} movimientos!",
+                fill="red",
+                font=("Comic Sans MS", 22, "bold")
+            )
+            # No permitir nuevos movimientos y retornar
+            ventana.unbind("<Key>")
+            return posicion_jugador, movimientos
+
+        laberinto[posicion_jugador[0]][posicion_jugador[1]] = 'P'
+        dibujar_laberinto(canvas, laberinto)
+
+    return posicion_jugador, movimientos
 
 
-    # Cuando se acabe se termina el juego
-    print("\n--- Juego Terminado ---")
-
-# Punto de entrada para iniciar el juego.
 def main():
-    jugar()
+    """Función principal del juego."""
+    usar_archivo = input("¿Quieres usar tu propio laberinto? (s/n): ").lower() == 's'
+    # Usar archivo es bool, y llamar funcion apropiada
+    if usar_archivo:
+        nombre_archivo = input("Nombre del archivo (eg. laberinto.txt): ")
+        laberinto, posicion_jugador, posicion_salida = configurar_laberinto(
+            True, nombre_archivo
+        )
+    else:
+        laberinto, posicion_jugador, posicion_salida = configurar_laberinto()
+
+    # Iniciar variables y ventana
+    movimientos = 0
+
+    ventana = tk.Tk()
+    ventana.title("Juego del Laberinto")
+
+    # Configurar ventana dinamicamente
+    canvas = tk.Canvas(
+        ventana,
+        width=len(laberinto[0]) * CELL_SIZE,
+        height=len(laberinto) * CELL_SIZE,
+        bg="white"
+    )
+    canvas.pack()
+
+    dibujar_laberinto(canvas, laberinto)
+
+    def on_key(event):
+        nonlocal posicion_jugador, movimientos
+        posicion_jugador, movimientos = mover(
+            event, laberinto, canvas, ventana,
+            posicion_jugador, posicion_salida, movimientos
+        )
     
-main()
+    ventana.bind("<Key>", on_key)
+    ventana.mainloop()
+
+
+if __name__ == "__main__":
+    main()
