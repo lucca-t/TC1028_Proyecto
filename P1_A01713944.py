@@ -76,6 +76,7 @@ def dibujar_laberinto(canvas, laberinto):
              Cambiar color dependiendo de tipo de bloque con outline
     Salida: Canvas de Tkinter actualizado
     """
+    canvas.delete("all")
 
     for fila in range(len(laberinto)):
         for col in range(len(laberinto[0])):
@@ -133,7 +134,7 @@ def es_valido(laberinto, pos):
         return False
 
 
-def mover(event, laberinto, canvas, ventana, posicion_jugador,
+def mover(tecla, laberinto, canvas, ventana, posicion_jugador,
           posicion_salida, movimientos):
     """
     Entrada: Event de teclado, matriz del laberinto, canvas y ventana de 
@@ -145,7 +146,7 @@ def mover(event, laberinto, canvas, ventana, posicion_jugador,
     """
 
     # Solo considerar (w/a/s/d) para movimientos
-    tecla = event.keysym.lower()
+    
     if tecla not in ['w', 'a', 's', 'd']:
         return posicion_jugador, movimientos
 
@@ -173,7 +174,10 @@ def mover(event, laberinto, canvas, ventana, posicion_jugador,
                 font=("Comic Sans MS", 22, "bold")
             )
             # No permitir nuevos movimientos y retornar
-            ventana.unbind("<Key>")
+            ventana.unbind("w")
+            ventana.unbind("a")
+            ventana.unbind("s")
+            ventana.unbind("d")
             return posicion_jugador, movimientos
 
         laberinto[posicion_jugador[0]][posicion_jugador[1]] = 'P'
@@ -211,17 +215,21 @@ def main():
 
     dibujar_laberinto(canvas, laberinto)
 
-    # Mini metodo que llama mover si se presiona cualquier tecla
+    # Mini metodo que llama mover si se presiona tecla de movimiento
     # nonlocal para que use los valores edl main
-    def on_key(event):
+    def mover_direccion(tecla):
         nonlocal posicion_jugador, movimientos
         posicion_jugador, movimientos = mover(
-            event, laberinto, canvas, ventana,
+            tecla, laberinto, canvas, ventana,
             posicion_jugador, posicion_salida, movimientos
         )
     
-    # Checar por cualquier tecla y filtrar despues
-    ventana.bind("<Key>", on_key)
+    ventana.bind("w", lambda e: mover_direccion('w'))
+    ventana.bind("a", lambda e: mover_direccion('a'))
+    ventana.bind("s", lambda e: mover_direccion('s'))
+    ventana.bind("d", lambda e: mover_direccion('d'))
+
+    
     
     ventana.mainloop()
 
