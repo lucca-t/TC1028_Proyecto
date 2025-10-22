@@ -5,7 +5,8 @@
 #
 # Este proyecto usa un laberinto precargado o un archivo de texto
 # para jugar el laberinto en una interfaz gráfica.
-
+# Usa una matriz para los posiciones y las dibuja con tkinter
+# Todo esta en metodos para validar los movimientos y actualizar el juego
 
 
 import tkinter as tk
