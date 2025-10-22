@@ -42,6 +42,7 @@ def configurar_laberinto(usar_archivo=False, nombre_archivo=""):
         laberinto = cargar_laberinto(nombre_archivo)
         if not laberinto:
             print("Usando el laberinto predefinido por error de archivo.")
+    
     else:
         laberinto = []
 
